@@ -1,0 +1,47 @@
+---
+title: "C4 L2 · Контейнеры обработки фото для белого фона"
+config:
+  theme: base
+  htmlLabels: false
+  fontFamily: "Segoe UI, Arial, sans-serif"
+  themeCSS: ".flowchartTitleText { font-size: 24px !important; font-weight: 700; fill: #17334d !important; }"
+  themeVariables:
+    fontFamily: "Segoe UI, Arial, sans-serif"
+    fontSize: "16px"
+    lineColor: "#536a80"
+    edgeLabelBackground: "#ffffff"
+  flowchart:
+    wrappingWidth: 245
+    nodeSpacing: 52
+    rankSpacing: 48
+---
+flowchart TB
+    seller(["Продавец eBay<br/>[Человек]"])
+    drafts["Сервис черновиков<br/>[Внешняя система]"]
+    subgraph photo["Обработка фото"]
+        editor["Веб-редактор фото<br/>[Приложение · TypeScript / Canvas]<br/>Оркестрирует запрос, показ и сохранение"]
+        worker["ML-воркер<br/>[Web Worker · ONNX Runtime Web / WASM]<br/>Готовит RGB-тензор, считает маску и q"]
+        registry["Реестр моделей<br/>[Объектное хранилище · S3 / CDN]<br/>Хранит веса ONNX, калибровку и манифест"]
+        training["Пайплайн обучения и оценки<br/>[Пакетное задание · Python / PyTorch]<br/>Учится на эталонах и проверяет качество"]
+
+        editor <-->|postMessage · байты фото / маска, q, версия или ошибка| worker
+        worker -->|HTTPS · читает манифест, веса и калибровку| registry
+        training -->|S3 API · публикует проверенный пакет и манифест| registry
+    end
+    events["Платформа событий<br/>[Внешняя система]"]
+    annotation["Система разметки<br/>[Внешняя система]"]
+    drafts <-->|HTTPS · выдаёт исходник и принимает выбранное фото| editor
+    seller <-->|Выбирает белый фон / видит версии / подтверждает фото| editor
+    editor -->|HTTPS · передаёт исход попытки B8| events
+    events -->|Пакетная выгрузка · исходы, версии и ссылки| training
+    training <-->|HTTPS · задания / пары «фото + эталонная маска»| annotation
+
+    classDef human fill:#e0f5ee,stroke:#17705b,color:#102d26,stroke-width:2px
+    classDef internal fill:#e1eefc,stroke:#225d93,color:#152f4c,stroke-width:1.8px
+    classDef offline fill:#e8e7f7,stroke:#5e5497,color:#2e2652,stroke-width:1.8px
+    classDef external fill:#f0f3f6,stroke:#718094,color:#202f3e,stroke-width:1.4px
+    class seller human
+    class editor,worker,registry internal
+    class training offline
+    class drafts,events,annotation external
+    style photo fill:#f5f9ff,stroke:#225d93,stroke-width:1.7px

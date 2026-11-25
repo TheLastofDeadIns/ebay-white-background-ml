@@ -1,0 +1,38 @@
+---
+title: "Маршруты BPMN · Замена фона одного фото eBay на белый"
+config:
+  theme: base
+  htmlLabels: false
+  fontFamily: "Segoe UI, Arial, sans-serif"
+  themeCSS: ".flowchartTitleText { font-size: 22px !important; font-weight: 700; fill: #17334d !important; }"
+  flowchart:
+    nodeSpacing: 35
+    rankSpacing: 32
+---
+flowchart TB
+    start(("Фото<br/>открыто")) --> b1["B1 · Выбрать белый фон"]
+    b1 --> b2["B2 · Запросить маску товара"]
+    b2 --> b3["B3 · Вычислить маску товара"]
+    b3 --> quality{"Маска<br/>пригодна?"}
+    b3 -.- timer(("Таймер<br/>1,5 с"))
+    quality -->|Да · q ≥ 0,85| b4["B4 · Собрать предпросмотр"]
+    quality -->|Нет · q &lt; 0,85 или сбой| b5["B5 · Предложить исходное фото"]
+    timer -->|Тайм-аут| b5
+    b4 --> merge{"Свести<br/>маршруты"}
+    b5 --> merge
+    merge --> b6["B6 · Выбрать и подтвердить фото"]
+    b6 --> b7["B7 · Сохранить фото в черновик"]
+    b7 --> b8["B8 · Зарегистрировать исход попытки"]
+    b8 --> finish(("Фото<br/>сохранено"))
+    b8 -.-> signal["Сигнал для<br/>обучения и оценки"]
+
+    classDef seller fill:#e6f7ef,stroke:#22715c,color:#153c31
+    classDef editor fill:#edf4fd,stroke:#315f8a,color:#152f4c
+    classDef worker fill:#e1ecfa,stroke:#17568c,color:#123c65,stroke-width:2px
+    classDef fallback fill:#fff2dc,stroke:#925820,color:#57300e
+    classDef feedback fill:#f0ebfa,stroke:#6a5197,color:#3f2861
+    class start,b1,b6,finish seller
+    class b2,quality,b4,merge,b7 editor
+    class b3 worker
+    class timer,b5 fallback
+    class b8,signal feedback

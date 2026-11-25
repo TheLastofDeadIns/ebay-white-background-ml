@@ -1,0 +1,46 @@
+---
+title: "C4 L3 · Компоненты ML-воркера"
+config:
+  theme: base
+  htmlLabels: false
+  fontFamily: "Segoe UI, Arial, sans-serif"
+  themeCSS: ".flowchartTitleText { font-size: 24px !important; font-weight: 700; fill: #17334d !important; }"
+  themeVariables:
+    fontFamily: "Segoe UI, Arial, sans-serif"
+    fontSize: "16px"
+    lineColor: "#536a80"
+    edgeLabelBackground: "#ffffff"
+  flowchart:
+    wrappingWidth: 245
+    nodeSpacing: 70
+    rankSpacing: 54
+---
+flowchart TB
+    request(["Входной порт · B2<br/>Байты исходного фото и ID попытки"])
+    subgraph ml["ML-воркер"]
+        adapter["Адаптер вызова<br/>[Компонент · TypeScript]<br/>Координирует расчёт и обрабатывает сбои"]
+        features["Подготовка признаков<br/>[Компонент · ImageBitmap / Canvas]<br/>Поворот, масштабирование и нормализация"]
+        version["Загрузчик версии<br/>[Компонент · Fetch / Cache API]<br/>Выбирает совместимую активную версию"]
+        inference["Инференс сегментации<br/>[Компонент · ONNX Runtime Web]<br/>Вычисляет карту вероятностей товара"]
+        post["Постобработка и оценка<br/>[Компонент · TypeScript]<br/>Восстанавливает размер маски и вычисляет q"]
+
+        adapter -->|Передаёт байты фото| features
+        adapter -->|Запрашивает совместимый пакет| version
+        features -->|Передаёт RGB-тензор 512 × 512| inference
+        version -->|Передаёт веса ONNX| inference
+        version -->|Передаёт версию и параметры калибровки| post
+        features -->|Передаёт параметры масштабирования| post
+        inference -->|Передаёт карту вероятностей| post
+    end
+    manifest(["Входной порт · HTTPS<br/>Ответ с манифестом и пакетом модели"])
+    response(["Выходной порт · результат B3<br/>В веб-редактор для проверки и шага B4"])
+    request -->|postMessage · запрос редактора| adapter
+    manifest -->|Активная версия, веса, калибровка| version
+    post -->|Альфа-маска, q и версия| response
+    adapter -->|Статус ошибки при сбое вычисления| response
+
+    classDef component fill:#e1eefc,stroke:#225d93,color:#152f4c,stroke-width:1.8px
+    classDef port fill:#ffffff,stroke:#637588,color:#202f3e,stroke-dasharray:5 3
+    class request,manifest,response port
+    class adapter,features,version,inference,post component
+    style ml fill:#f5f9ff,stroke:#225d93,stroke-width:1.7px

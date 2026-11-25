@@ -1,0 +1,36 @@
+---
+title: "C4 L1 · Контекст обработки фото для белого фона"
+config:
+  theme: base
+  htmlLabels: false
+  fontFamily: "Segoe UI, Arial, sans-serif"
+  themeCSS: ".flowchartTitleText { font-size: 24px !important; font-weight: 700; fill: #17334d !important; }"
+  themeVariables:
+    fontFamily: "Segoe UI, Arial, sans-serif"
+    fontSize: "17px"
+    lineColor: "#536a80"
+    edgeLabelBackground: "#ffffff"
+  flowchart:
+    wrappingWidth: 245
+    nodeSpacing: 46
+    rankSpacing: 72
+---
+flowchart TB
+    seller(["Продавец eBay<br/>[Человек]<br/>Выбирает версию фото для объявления"])
+    system["Обработка фото для белого фона<br/>[Рассматриваемая система]<br/>Предлагает заменить фон и сохраняет выбор"]
+    drafts["Сервис черновиков<br/>[Внешняя система]<br/>Хранит фотографии объявлений"]
+    events["Платформа событий<br/>[Внешняя система]<br/>Принимает и хранит события обработки"]
+    annotation["Система разметки<br/>[Внешняя система]<br/>Готовит эталонные маски товара"]
+
+    seller -->|Запрашивает белый фон и подтверждает фото| system
+    system -->|Показывает доступные версии и итог сохранения| seller
+    system <-->|Получает исходник и сохраняет выбранное фото| drafts
+    system <-->|Регистрирует исходы и читает выборку для оценки| events
+    system <-->|Передаёт задания и получает фото с эталонными масками| annotation
+
+    classDef human fill:#e0f5ee,stroke:#17705b,color:#102d26,stroke-width:2px
+    classDef focus fill:#174878,stroke:#0e345a,color:#ffffff,stroke-width:2px
+    classDef external fill:#f0f3f6,stroke:#718094,color:#202f3e,stroke-width:1.4px
+    class seller human
+    class system focus
+    class drafts,events,annotation external
